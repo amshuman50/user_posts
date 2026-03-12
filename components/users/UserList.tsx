@@ -15,8 +15,10 @@
 
 import { useState, useMemo } from 'react';
 import Link from "next/link";
+import { useAppSelector } from '@/store/hooks';
 
-export default function UserList({ users }: any) {
+export default function UserList() {
+  const users = useAppSelector((state) => state.users.list);
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredUsers = useMemo(() => {

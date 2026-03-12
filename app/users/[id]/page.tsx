@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { fetchPostsByUser } from "@/services/api";
 import { Post } from "@/types/post";
 import { z } from 'zod';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { setPosts, addPost } from '@/store/postsSlice';
 
 interface UserPostsPageProps {
   params: Promise<{ id: string }>;
@@ -16,7 +18,8 @@ const postSchema = z.object({
 
 export default function UserPostsPage({ params }: UserPostsPageProps) {
   const [userId, setUserId] = useState<number | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const posts = useAppSelector((state) => state.posts.list);
+  const dispatch = useAppDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -30,7 +33,7 @@ export default function UserPostsPage({ params }: UserPostsPageProps) {
 
       const apiPosts = await fetchPostsByUser(uid);
       const localPosts = JSON.parse(localStorage.getItem(`posts_${uid}`) || '[]');
-      setPosts([...apiPosts, ...localPosts]);
+      dispatch(setPosts([...apiPosts, ...localPosts]));
     };
     loadData();
   }, []);
@@ -60,7 +63,7 @@ export default function UserPostsPage({ params }: UserPostsPageProps) {
       const localPosts = JSON.parse(localStorage.getItem(`posts_${userId}`) || '[]');
       localPosts.push(newPost);
       localStorage.setItem(`posts_${userId}`, JSON.stringify(localPosts));
-      setPosts((prev) => [...prev, newPost]);
+      dispatch(addPost(newPost));
       setTitle('');
       setBody('');
       setIsModalOpen(false);

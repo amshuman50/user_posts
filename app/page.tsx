@@ -12,11 +12,24 @@
 //   );
 // }
 
+"use client";
+
+import { useEffect } from 'react';
 import UserList from "@/components/users/UserList";
 import { getUsers } from "@/services/api";
+import { useAppDispatch } from '@/store/hooks';
+import { setUsers } from '@/store/usersSlice';
 
-export default async function Page() {
-  const users = await getUsers();
+export default function Page() {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    const load = async () => {
+      const users = await getUsers();
+      dispatch(setUsers(users));
+    };
+    load();
+  }, [dispatch]);
 
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-6">
@@ -27,14 +40,11 @@ export default async function Page() {
           <h1 className="text-3xl font-bold text-gray-900">
             User List
           </h1>
-          {/* <p className="text-gray-500 mt-2">
-            Browse and manage all registered users
-          </p> */}
         </div>
 
         {/* Card Container */}
         <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6">
-          <UserList users={users} />
+          <UserList />
         </div>
       </div>
     </main>
