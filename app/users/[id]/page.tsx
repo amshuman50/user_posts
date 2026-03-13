@@ -24,6 +24,11 @@ export default function UserPostsPage({ params }: UserPostsPageProps) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [errors, setErrors] = useState<{ title?: string; body?: string }>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const totalPages = Math.ceil(posts.length / itemsPerPage);
+  const paginatedPosts = posts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   useEffect(() => {
     const loadData = async () => {
@@ -38,15 +43,17 @@ export default function UserPostsPage({ params }: UserPostsPageProps) {
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [posts.length, currentPage, totalPages]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const result = postSchema.safeParse({ title, body });
     if (!result.success) {
       const errorObj: { title?: string; body?: string } = {};
-      // result.error.issues.forEach((err) => {
-      //   if (err.path[0] === 'title') errorObj.title = err.message;
-      //   if (err.path[0] === 'body') errorObj.body = err.message;
-      // });
       for (const err of result.error.issues) {
         if (err.path[0] === 'title') errorObj.title = err.message;
         if (err.path[0] === 'body') errorObj.body = err.message;
@@ -64,6 +71,7 @@ export default function UserPostsPage({ params }: UserPostsPageProps) {
       localPosts.push(newPost);
       localStorage.setItem(`posts_${userId}`, JSON.stringify(localPosts));
       dispatch(addPost(newPost));
+      setCurrentPage(Math.ceil((posts.length + 1) / itemsPerPage));
       setTitle('');
       setBody('');
       setIsModalOpen(false);
@@ -100,7 +108,7 @@ export default function UserPostsPage({ params }: UserPostsPageProps) {
           </div>
         ) : (
           <div className="grid gap-6">
-            {posts.map((post) => (
+            {paginatedPosts.map((post) => (
               <div
                 key={post.id}
                 className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
@@ -117,6 +125,29 @@ export default function UserPostsPage({ params }: UserPostsPageProps) {
                 </div> */}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {posts.length > itemsPerPage && (
+          <div className="flex justify-center mt-8 space-x-4">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="px-4 py-2 text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
           </div>
         )}
 
@@ -169,8 +200,3 @@ export default function UserPostsPage({ params }: UserPostsPageProps) {
     </div>
   );
 }
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
